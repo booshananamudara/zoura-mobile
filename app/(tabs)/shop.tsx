@@ -1,5 +1,6 @@
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import '../global.css';
 
 interface Vendor {
@@ -35,6 +36,7 @@ interface Product {
 const API_URL = 'http://192.168.1.66:8080/products';  // Your computer's IP
 
 export default function ShopScreen() {
+    const router = useRouter();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -63,6 +65,16 @@ export default function ShopScreen() {
             setLoading(false);
         }
     };
+
+    const handleProductPress = (product: Product) => {
+        router.push({
+            pathname: '/(tabs)/product-details',
+            params: {
+                product: JSON.stringify(product),
+            },
+        });
+    };
+
     return (
         <View style={styles.container} className="flex-1 bg-white dark:bg-gray-900">
             <View className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -95,7 +107,10 @@ export default function ShopScreen() {
                     data={products}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <View className="p-4 mx-4 my-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <TouchableOpacity
+                            onPress={() => handleProductPress(item)}
+                            className="p-4 mx-4 my-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                        >
                             <Text className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {item.name}
                             </Text>
@@ -108,7 +123,7 @@ export default function ShopScreen() {
                             <Text className="mt-2 text-xl font-bold text-blue-600 dark:text-blue-400">
                                 ₹{parseFloat(item.price).toFixed(2)}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     )}
                     ListEmptyComponent={
                         <View className="flex-1 items-center justify-center p-8">
