@@ -40,6 +40,7 @@ interface CartContextType {
     fetchCart: () => Promise<void>;
     removeFromCart: (itemId: string) => Promise<void>;
     clearCart: () => Promise<void>;
+    checkout: () => Promise<any>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -64,15 +65,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         try {
             setIsLoading(true);
             const token = await AsyncStorage.getItem(TOKEN_KEY);
-            if (!token) return;
 
-            const response = await axios.get(`${API_BASE_URL}/cart`, {
-                headers: { Authorization: `Bearer ${token}` },
+            // If no token, clear cart and return
+            if (!token) {
+                setCart(null);
+                return;
+            }
+
+            // Add cache-busting timestamp to prevent stale data
+            const response = await axios.get(`${API_BASE_URL}/cart?_t=${Date.now()}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                },
             });
 
+            console.log('Cart fetched:', JSON.stringify(response.data));
             setCart(response.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching cart:', error);
+            // If fetch fails (e.g., 401 unauthorized), clear cart
+            if (error.response?.status === 401 || error.response?.status === 404) {
+                setCart(null);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -135,6 +151,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const checkout = async () => {
+        try {
+            const token = await AsyncStorage.getItem(TOKEN_KEY);
+            if (!token) throw new Error('Not authenticated');
+
+            const response = await axios.post(
+                `${API_BASE_URL}/orders`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Reset cart to empty state immediately (don't refetch to avoid race conditions)
+            setCart({
+                id: cart?.id || '',
+                items: [],
+                total_price: 0,
+            });
+
+            return response.data.order;
+        } catch (error: any) {
+            console.error('Checkout error:', error);
+            throw new Error(
+                error.response?.data?.message || 'Checkout failed'
+            );
+        }
+    };
+
     return (
         <CartContext.Provider
             value={{
@@ -147,6 +190,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 fetchCart,
                 removeFromCart,
                 clearCart,
+                checkout,
             }}
         >
             {children}

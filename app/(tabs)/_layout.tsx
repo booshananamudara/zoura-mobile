@@ -63,6 +63,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="orders"
+        options={{
+          title: 'Orders',
+          tabBarIcon: ({ color }) => <TabBarIcon name="list" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
@@ -81,6 +88,13 @@ export default function TabLayout() {
         options={{
           href: null, // Hide from tab bar
           title: 'Product Details',
+        }}
+      />
+      <Tabs.Screen
+        name="order-success"
+        options={{
+          href: null, // Hide from tab bar
+          title: 'Order Success',
         }}
       />
     </Tabs>

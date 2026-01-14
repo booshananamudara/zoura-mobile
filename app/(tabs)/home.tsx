@@ -1,17 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native';
-import '../global.css';
 
 export default function HomeScreen() {
     return (
-        <View style={styles.container} className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
-            <Text style={styles.title} className="text-3xl font-bold text-gray-900 dark:text-white">
-                Welcome to Zoura
-            </Text>
-            <Text style={styles.subtitle} className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-                Your marketplace for everything
-            </Text>
-            <View className="mt-8 p-4 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Text className="text-blue-900 dark:text-blue-100">
+        <View style={styles.container}>
+            <Text style={styles.title}>Welcome to Zoura</Text>
+            <Text style={styles.subtitle}>Your marketplace for everything</Text>
+            <View style={styles.card}>
+                <Text style={styles.cardText}>
                     Explore products, connect with friends, and more!
                 </Text>
             </View>
@@ -22,13 +17,34 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
+        padding: 20,
     },
     title: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: 'bold',
+        color: '#111827',
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: 18,
+        color: '#6B7280',
         marginTop: 16,
+        textAlign: 'center',
+    },
+    card: {
+        marginTop: 32,
+        padding: 16,
+        backgroundColor: '#DBEAFE',
+        borderRadius: 12,
+        maxWidth: 300,
+    },
+    cardText: {
+        color: '#1E40AF',
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
     },
 });

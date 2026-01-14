@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -10,15 +10,20 @@ import {
     Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useCart } from '../../context/CartContext';
 
 export default function CartScreen() {
     const router = useRouter();
-    const { cartItems, totalPrice, isLoading, fetchCart, removeFromCart } = useCart();
+    const { cartItems, totalPrice, isLoading, fetchCart, removeFromCart, checkout } = useCart();
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-    useEffect(() => {
-        fetchCart();
-    }, []);
+    // Refetch cart every time the screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchCart();
+        }, [])
+    );
 
     const handleRemoveItem = (itemId: string, productName: string) => {
         Alert.alert(
@@ -41,8 +46,25 @@ export default function CartScreen() {
         );
     };
 
-    const handleCheckout = () => {
-        Alert.alert('Coming Soon', 'Checkout feature will be available soon!');
+    const handleCheckout = async () => {
+        if (cartItems.length === 0) {
+            Alert.alert('Cart Empty', 'Please add some items to your cart first.');
+            return;
+        }
+
+        setCheckoutLoading(true);
+        try {
+            const order = await checkout();
+            // Navigate to success screen
+            router.push('/(tabs)/order-success');
+        } catch (error: any) {
+            Alert.alert(
+                'Checkout Failed',
+                error.message || 'Unable to process your order. Please try again.'
+            );
+        } finally {
+            setCheckoutLoading(false);
+        }
     };
 
     if (isLoading) {
@@ -103,7 +125,7 @@ export default function CartScreen() {
                             <View style={styles.priceRow}>
                                 <Text style={styles.quantity}>Qty: {item.quantity}</Text>
                                 <Text style={styles.price}>
-                                    ₹{(parseFloat(item.price_at_add.toString()) * item.quantity).toFixed(2)}
+                                    ₹{(parseFloat(item.price_at_add.toString()) * item.quantity)}
                                 </Text>
                             </View>
                         </View>
@@ -124,13 +146,24 @@ export default function CartScreen() {
             <View style={styles.footer}>
                 <View style={styles.totalContainer}>
                     <Text style={styles.totalLabel}>Total:</Text>
-                    <Text style={styles.totalPrice}>₹{totalPrice.toFixed(2)}</Text>
+                    <Text style={styles.totalPrice}>₹{totalPrice}</Text>
                 </View>
                 <TouchableOpacity
-                    style={styles.checkoutButton}
+                    style={[
+                        styles.checkoutButton,
+                        (checkoutLoading || cartItems.length === 0) && styles.buttonDisabled
+                    ]}
                     onPress={handleCheckout}
+                    disabled={checkoutLoading || cartItems.length === 0}
                 >
-                    <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+                    {checkoutLoading ? (
+                        <View style={styles.buttonContent}>
+                            <ActivityIndicator color="#FFFFFF" size="small" />
+                            <Text style={styles.checkoutText}>Processing...</Text>
+                        </View>
+                    ) : (
+                        <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+                    )}
                 </TouchableOpacity>
             </View>
         </View>
@@ -282,6 +315,21 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    buttonDisabled: {
+        backgroundColor: '#9CA3AF',
+        shadowOpacity: 0,
+    },
+    buttonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
     checkoutText: {
         color: '#FFFFFF',
