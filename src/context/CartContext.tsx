@@ -36,11 +36,11 @@ interface CartContextType {
     totalPrice: number;
     cartCount: number;
     isLoading: boolean;
-    addToCart: (productId: string, quantity: number) => Promise<void>;
+    addToCart: (productId: string, quantity: number, variantId?: string) => Promise<void>;
     fetchCart: () => Promise<void>;
     removeFromCart: (itemId: string) => Promise<void>;
     clearCart: () => Promise<void>;
-    checkout: () => Promise<any>;
+    checkout: (shippingAddress: { street: string; city: string; postalCode: string; phone: string }, paymentMethod?: string) => Promise<any>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -94,14 +94,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const addToCart = async (productId: string, quantity: number) => {
+    const addToCart = async (productId: string, quantity: number, variantId?: string) => {
         try {
             const token = await AsyncStorage.getItem(TOKEN_KEY);
             if (!token) throw new Error('Not authenticated');
 
+            const payload: { productId: string; quantity: number; variantId?: string } = {
+                productId,
+                quantity,
+            };
+            if (variantId) {
+                payload.variantId = variantId;
+            }
+
             const response = await axios.post(
                 `${API_BASE_URL}/cart`,
-                { productId, quantity },
+                payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -151,14 +159,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const checkout = async () => {
+    const checkout = async (
+        shippingAddress: { street: string; city: string; postalCode: string; phone: string },
+        paymentMethod: string = 'cash_on_delivery'
+    ) => {
         try {
             const token = await AsyncStorage.getItem(TOKEN_KEY);
             if (!token) throw new Error('Not authenticated');
 
             const response = await axios.post(
                 `${API_BASE_URL}/orders`,
-                {},
+                { shippingAddress, paymentMethod },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 

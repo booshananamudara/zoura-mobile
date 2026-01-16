@@ -46,25 +46,14 @@ export default function CartScreen() {
         );
     };
 
-    const handleCheckout = async () => {
+    const handleCheckout = () => {
         if (cartItems.length === 0) {
             Alert.alert('Cart Empty', 'Please add some items to your cart first.');
             return;
         }
 
-        setCheckoutLoading(true);
-        try {
-            const order = await checkout();
-            // Navigate to success screen
-            router.push('/(tabs)/order-success');
-        } catch (error: any) {
-            Alert.alert(
-                'Checkout Failed',
-                error.message || 'Unable to process your order. Please try again.'
-            );
-        } finally {
-            setCheckoutLoading(false);
-        }
+        // Navigate to checkout screen instead of directly calling checkout
+        router.push('/checkout');
     };
 
     if (isLoading) {
